@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from starlette.concurrency import run_in_threadpool
 
 load_dotenv()
 app = FastAPI(title="안전 신고 분석 API", version="0.0.1")
@@ -74,7 +75,7 @@ prompt = ChatPromptTemplate.from_messages(
 
 
 def upload_s3(image_data: bytes, content_type: str) -> str:
-    file_name = f"ai/{uuid.uuid4()}.jpg"
+    file_name = f"ai/{uuid.uuid4()}"
     s3.put_object(
         Bucket=bucket_name, Key=file_name, Body=image_data, ContentType=content_type
     )
@@ -87,11 +88,13 @@ def upload_s3(image_data: bytes, content_type: str) -> str:
 @app.post("/analyze", response_model=ReportAnalysis)
 async def analyze_image(file: UploadFile = File(...)):
     image_data = await file.read()
-    image_url = upload_s3(image_data, file.content_type)
+    image_url = await run_in_threadpool(upload_s3, image_data, file.content_type)
+    # 동기 I/O 함수는 run_in_threadpool을 사용하여 별도 스레드에서 실행해야 한다
 
     chain = prompt | llm | parser
 
-    return chain.invoke(
+    # 이벤트 루프 블로킹 방지 ainvoke 사용
+    return await chain.ainvoke(
         {
             "image_url": image_url,
             # format_instructions는 JSON 형식으로 응답하도록 지시
