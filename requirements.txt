@@ -1,10 +1,9 @@
-fastapi~=0.116.1
+fastapi==0.116.1
 uvicorn[standard]==0.35.0
-python-dotenv~=1.1.1
-python-multipart~=0.0.12
+python-dotenv==1.1.1
+python-multipart==0.0.20
 pydantic==2.11.7
-langchain~=0.3.27
-langchain-core~=0.3.72
-langchain-openai~=0.3.28
-boto3~=1.35.0
-starlette~=0.48.0
+langchain==0.3.27
+langchain-core==0.3.76
+langchain-openai==0.3.33
+boto3==1.35.99
